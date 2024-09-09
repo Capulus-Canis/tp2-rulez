@@ -1,109 +1,70 @@
-const { render } = require("ejs");
-const express = require('express')
-const app = express()
-app.use(express.static("public"));
-app.use(express.urlencoded({ extended: true }))
-app.set('view engine', 'ejs')
+const port = 8080;
+const express = require("express");
+const fs = require("fs");
 
-app.get('/', (request, response) => {
-    response.render("index", { n1: "", n2: "", result: "" });
-})
-
-app.route("/erro").get((req, res) => {
-    res.render("erro");
-  });
-
- app.get('/fronte',(request,response) => {
-  var resul = ""
-  response.render(`index`, {resul})
-})
-
-app
-  .route("/res1")
-  .get((req, res) => {
-    res.redirect("/");
-  })
-  .post((req, res) => {
-    n1 = parseFloat(req.body.n1);
-    n2 = parseFloat(req.body.n2);
-
-    if (isNaN(n1) || isNaN(n2)) {
-      result = `Digite apenas números`
-      res.redirect("/erro");
-    } else {
-      result = n1 + n2;
-      res.render("index");
-    }
-  });
-
-  app
-  .route("/res2")
-  .get((req, res) => {
-    res.redirect("/");
-  })
-  .post((req, res) => {
-    n1 = parseFloat(req.body.n1);
-    n2 = parseFloat(req.body.n2);
-    if (isNaN(n1) || isNaN(n2)) {
-      result = `Digite apenas números`
-      res.redirect("/erro");
-    } else {
-      result = n1 - n2;
-      res.render("index");
-    }
-  });
-
-  app
-  .route("/res3")
-  .get((req, res) => {
-    res.redirect("/");
-  })
-  .post((req, res) => {
-    n1 = parseFloat(req.body.n1);
-    n2 = parseFloat(req.body.n2);
-
-    if (isNaN(n1) || isNaN(n2)) {
-      result = `Digite apenas números`
-      res.redirect("/erro");
-    } else {
-      result = n1 * n2;
-      res.render("index");
-    }
-  });
-
-  app
-  .route("/res4")
-  .get((req, res) => {
-    res.redirect("/");
-  })
-  .post((req, res) => {
-    n1 = parseFloat(req.body.n1);
-    n2 = parseFloat(req.body.n2);
-
-    if (isNaN(n1) || isNaN(n2)) {
-      result = `Digite apenas números`
-      res.redirect("/erro");
-    }
-    else if(n2==0){
-        result = `Não dá para dividir o primeiro número por 0`
-        res.redirect("/erro");
-    }
-     else {
-      result = n1 / n2;
-      res.render("index");
-    }
-  });
+const app = express();
+app.set("view engine", "ejs");
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use("/public", express.static("public"));
 
 
- app.post('/resultado', (request, response) => {
-   let n1 = parseFloat(request.body.n1)
-   let n2 = parseFloat(request.body.n2)
-   let n3 = parseFloat(request.body.n3)
+const { MongoClient, ServerApiVersion } = require('mongodb');
+const uri = "mongodb+srv://DaviJorge:Garrison2020@cluster.eckz9.mongodb.net/?retryWrites=true&w=majority&appName=Cluster";
 
-    resposta = (n2 * n3) / n1
-    response.render('conta',{resposta})
- })
-const PORTA = 8080
-app.listen (PORTA, () => {
-    console.log(`Servidor rodando em http://lcalhost:${PORTA}`);
-})
+// Create a MongoClient with a MongoClientOptions object to set the Stable API version
+const client = new MongoClient(uri, {
+  serverApi: {
+    version: ServerApiVersion.v1,
+    strict: true,
+    deprecationErrors: true,
+  }
+});
+
+async function run() {
+  try {
+    // Connect the client to the server	(optional starting in v4.7)
+    await client.connect();
+    // Send a ping to confirm a successful connection
+    await client.db("admin").command({ ping: 1 });
+    console.log("Conectado com Sucesso ao MongoDB!");
+  } finally {
+    // Ensures that the client will close when you finish/error
+    await client.close();
+  }
+}
+run().catch(console.dir);
+
+
+let fileData = JSON.parse(fs.readFileSync(`users.json`));
+
+app.get("/", (requisicao, resposta) => {
+  resposta.render("index");
+});
+app.get("/barra", (requisicao, resposta) => {
+  resposta.render("barra");
+});
+app.get("/JF", (requisicao, resposta) => {
+  resposta.render("JF");
+});
+app.get("/login", (requisicao, resposta) => {
+  resposta.render("login");
+});
+app.get("/visgueiro", (requisicao, resposta) => {
+  resposta.render("visgueiro");
+});
+
+app.post("/salvar", (req, res) => {
+  let nomeuser = req.body.nm;
+  let locuser = req.body.loc;
+  let valuser = req.body.val;
+  let teluser = req.body.tel;
+
+  let cd = { nm: nomeuser, loc: locuser, val: valuser, tel: teluser };
+
+  fileData.push(cd);
+  resultado = fs.writeFileSync(`users.json`, JSON.stringify(fileData));
+  res.render("ty", { resultado });
+});
+console.log("servidor funcionando na porta:", port);
+app.listen(port);
